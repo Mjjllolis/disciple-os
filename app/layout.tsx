@@ -1,19 +1,18 @@
-"use client";
-
-import { MantineProvider, createTheme } from "@mantine/core";
 import { SessionProvider } from "next-auth/react";
-
-const theme = createTheme({});
+import ThemeRegistry from "./components/ThemeRegistry";
+import ResponsiveAppBar from "./components/ResponsiveAppBar";
+import AuthProvider from "./components/AuthProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <SessionProvider>
-          <MantineProvider theme={theme}>
+        <AuthProvider> {/* ✅ Wrap entire app inside AuthProvider */}
+          <ThemeRegistry>
+            <ResponsiveAppBar />
             {children}
-          </MantineProvider>
-        </SessionProvider>
+          </ThemeRegistry>
+        </AuthProvider>
       </body>
     </html>
   );

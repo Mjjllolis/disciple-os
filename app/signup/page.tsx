@@ -1,136 +1,128 @@
 "use client";
 
-import { Container, Title, Paper, Stack, Text, TextInput, PasswordInput, Button, Anchor, Group, Center } from "@mantine/core";
-import { useForm } from "@mantine/form";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { Box, Button, Container, Grid, Paper, TextField, Typography, Link } from "@mui/material";
 
 export default function SignupPage() {
     const router = useRouter();
-    const form = useForm({
-        initialValues: {
-            email: '',
-            password: '',
-        },
-        validate: {
-            email: (value: string) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
-            password: (value: string) => (value.length >= 6 ? null : 'Password must be at least 6 characters'),
-        },
-    });
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
-    const handleSignup = async (values: { email: string; password: string }) => {
+    const handleSignup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setErrors({});
+
+        if (!/^\S+@\S+$/.test(email)) {
+            setErrors((prev) => ({ ...prev, email: "Invalid email address" }));
+            return;
+        }
+        if (password.length < 6) {
+            setErrors((prev) => ({ ...prev, password: "Password must be at least 6 characters" }));
+            return;
+        }
+
         try {
-            await createUserWithEmailAndPassword(auth, values.email, values.password);
+            await createUserWithEmailAndPassword(auth, email, password);
             router.push("/login");
         } catch (err: any) {
             if (err.code === "auth/email-already-in-use") {
-                form.setErrors({ email: "This email is already in use. Try logging in." });
+                setErrors({ email: "This email is already in use. Try logging in." });
             } else if (err.code === "auth/weak-password") {
-                form.setErrors({ password: "Password should be at least 6 characters." });
+                setErrors({ password: "Password should be at least 6 characters." });
             } else {
-                form.setErrors({ email: "Failed to create account. Please try again." });
+                setErrors({ email: "Failed to create account. Please try again." });
             }
         }
     };
 
     return (
-        <Container
-            size={1000}
-            my={50}
-            style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100vh',
-            }}
-        >
+        <Container maxWidth="lg" sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Paper
-                withBorder
-                shadow="xl"
-                p={40}
-                radius="lg"
-                style={{
-                    display: 'flex',
-                    width: '100%',
+                elevation={10}
+                sx={{
+                    display: "flex",
+                    width: "100%",
                     maxWidth: 1000,
-                    backgroundColor: "#f0f0f0",
-                    boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.2)",
-                    overflow: 'hidden',
-                    borderRadius: "16px",
+                    borderRadius: 3,
+                    overflow: "hidden",
                 }}
             >
-                <div style={{ flex: 1, padding: 40, backgroundColor: "#fff", borderRadius: "16px 0 0 16px" }}>
-                    <Text style={{ textAlign: "center", fontWeight: 700 }} component="h1" size="xl">
+                {/* Left Section: Signup Form */}
+                <Box sx={{ flex: 1, p: 5, backgroundColor: "#fff", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    <Typography variant="h4" fontWeight={700} align="center" color="primary" gutterBottom>
                         Create Your Account
-                    </Text>
-                    <form onSubmit={form.onSubmit(handleSignup)}>
-                        <Stack mt={20} style={{ textAlign: "center" }}>
-                            <TextInput
-                                label="Email"
-                                placeholder="Enter your email"
-                                {...form.getInputProps('email')}
-                                required
-                                size="md"
-                            />
-                            <PasswordInput
-                                label="Password"
-                                placeholder="Enter your password"
-                                {...form.getInputProps('password')}
-                                required
-                                size="md"
-                            />
-                            <Button
-                                type="submit"
-                                fullWidth
-                                size="md"
-                                radius="md"
-                                color="red"
-                                style={{ transition: "0.3s", fontWeight: 600 }}
-                            >
-                                Sign Up
-                            </Button>
-                        </Stack>
+                    </Typography>
+
+                    <form onSubmit={handleSignup} noValidate>
+                        <TextField
+                            label="Email"
+                            variant="outlined"
+                            fullWidth
+                            margin="normal"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            error={!!errors.email}
+                            helperText={errors.email}
+                            required
+                        />
+                        <TextField
+                            label="Password"
+                            variant="outlined"
+                            fullWidth
+                            margin="normal"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            error={!!errors.password}
+                            helperText={errors.password}
+                            required
+                        />
+                        <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 3, fontWeight: 600 }}>
+                            Sign Up
+                        </Button>
                     </form>
-                    <Center mt={10}>
-                        <Text size="sm" style={{
-                            textAlign: "center"
-                        }}>
-                            Already have an account? <Anchor href="/login" size="sm" color="red">Log In</Anchor>
-                        </Text>
-                    </Center>
-                </div>
-                {/* Background Image with Overlay Text */}
-                <div
-                    style={{
+
+                    <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+                        Already have an account?{" "}
+                        <Link href="/login" color="primary" sx={{ fontWeight: 600 }}>
+                            Log In
+                        </Link>
+                    </Typography>
+                </Box>
+
+                {/* Right Section: Background Image with Overlay Text */}
+                <Box
+                    sx={{
                         flex: 1,
-                        position: "relative",
                         display: "flex",
-                        justifyContent: "center",
                         alignItems: "center",
-                        width: "100%",
-                        height: "50VH",
+                        justifyContent: "center",
+                        position: "relative",
                         backgroundImage: "url('/ChurchHands.jpg')",
                         backgroundSize: "cover",
                         backgroundPosition: "center",
-                        backgroundRepeat: "no-repeat",
                     }}
                 >
                     {/* Overlay Text */}
-                    <Title
-                        style={{
+                    <Typography
+                        variant="h3"
+                        fontWeight={700}
+                        sx={{
                             position: "absolute",
                             color: "#fff",
-                            textAlign: "center",
-                            backgroundColor: "rgba(0,0,0,0.5)",
-                            padding: "10px 20px",
-                            borderRadius: "8px",
-                            fontWeight: 700,
+                            backgroundColor: "rgba(0,0,0,0.6)",
+                            px: 3,
+                            py: 1,
+                            borderRadius: 2,
                         }}
                     >
                         DiscipleOS
-                    </Title>
-                </div>
+                    </Typography>
+                </Box>
             </Paper>
         </Container>
     );

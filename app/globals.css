@@ -1,42 +1,99 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+	--background: #ffffff;
+	--foreground: #171717;
+
+	/* Custom Color Palette */
+	--dark-gray: #595957;
+	--muted-blue: #89a4b0;
+	--deep-brown: #4e4038;
+	--soft-beige: #d2c6b6;
+	--light-cream: #fffff4;
+
+	--navbar-bg: var(--soft-beige);
+	--navbar-text: var(--deep-brown);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+	:root {
+		--background: #0a0a0a;
+		--foreground: #ededed;
+
+		/* Adjusted colors for dark mode */
+		--dark-gray: #444444;
+		--muted-blue: #7d98a0;
+		--deep-brown: #3a2f2a;
+		--soft-beige: #b8a89a;
+		--light-cream: #f0eae2;
+	}
 }
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
+	max-width: 100vw;
+	overflow-x: hidden;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+	color: var(--foreground);
+	background: var(--background);
+	font-family: Arial, Helvetica, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 * {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+	color: inherit;
+	text-decoration: none;
+}
+
+/* Apply color scheme for UI elements */
+.button-primary {
+	background-color: var(--muted-blue);
+	color: var(--light-cream);
+	border-radius: 8px;
+	padding: 10px 20px;
+	font-weight: bold;
+	transition: background 0.3s;
+}
+
+.button-primary:hover {
+	background-color: var(--deep-brown);
+}
+
+.card {
+	background-color: var(--soft-beige);
+	color: var(--dark-gray);
+	border-radius: 8px;
+	padding: 20px;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+	html {
+		color-scheme: dark;
+	}
+}
+
+/* Footer Styles */
+.footer {
+	background: var(--light-cream);
+	color: var(--deep-brown);
+	text-align: center;
+	padding: 20px 0;
+}
+
+.footer-text {
+	font-size: 0.9rem;
+	opacity: 0.8;
+}
+
+.app-bar {
+	background-color: var(--navbar-bg);
+	color: var(--navbar-text);
 }

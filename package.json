@@ -19,6 +19,7 @@
     "@mui/material": "^6.4.5",
     "@tabler/icons-react": "^3.30.0",
     "firebase": "^11.3.0",
+    "framer-motion": "^12.4.5",
     "next": "15.1.6",
     "next-auth": "^4.24.11",
     "react": "^19.0.0",

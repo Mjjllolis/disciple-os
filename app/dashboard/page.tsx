@@ -12,13 +12,13 @@ export default function DashboardPage() {
             <CssBaseline />
 
             {/* Header */}
-            <AppBar position="fixed" sx={{ height: `${headerHeight}px`, backgroundColor: "var(--muted-blue)", color: "var(--light-cream)", zIndex: 1100 }}>
+            {/* <AppBar position="fixed" sx={{ height: `${headerHeight}px`, backgroundColor: "var(--muted-blue)", color: "var(--light-cream)", zIndex: 1100 }}>
                 <Toolbar>
                     <Typography variant="h6" fontWeight="bold">
                         Bible Categorizer
                     </Typography>
                 </Toolbar>
-            </AppBar>
+            </AppBar> */}
 
             {/* Main Content (Loads Bible Categorizer) */}
             <Container sx={{ marginTop: `${headerHeight}px`, p: 3 }}>

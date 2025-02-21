@@ -87,7 +87,7 @@ export default function ResponsiveAppBar() {
                         {session?.user ? (
                             <Tooltip title="Open settings">
                                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                    <Avatar sx={{ bgcolor: "var(--muted-blue)", color: "var(--light-cream)" }}>
+                                    <Avatar sx={{ bgcolor: "var(--deep-brown)", color: "var(--light-cream)" }}>
                                         {session.user.email?.charAt(0).toUpperCase() || "U"}
                                     </Avatar>
                                 </IconButton>
@@ -116,7 +116,7 @@ export default function ResponsiveAppBar() {
                         onClose={handleCloseUserMenu}
                     >
                         <MenuItem onClick={handleLogout}>
-                            <Typography sx={{ textAlign: "center", fontSize: "1.1rem", fontWeight: 600 }}>Logout</Typography>
+                            <Typography sx={{ textAlign: "center", fontSize: "1.1rem", fontWeight: 200 }}>Logout</Typography>
                         </MenuItem>
                     </Menu>
                 </Toolbar>

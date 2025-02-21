@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { read, utils } from "xlsx";
 import { Button, Card, Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Grid, CircularProgress } from "@mui/material";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import ClearIcon from "@mui/icons-material/Clear";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
@@ -35,6 +37,7 @@ export default function Home() {
     const [questionPreview, setQuestionPreview] = useState<any[]>([]);
     const [categoryPreview, setCategoryPreview] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
     const handleFileUpload = (
         e: React.ChangeEvent<HTMLInputElement>,
@@ -86,9 +89,48 @@ export default function Home() {
         setLoading(false);
     };
 
+    // Aggregate category counts for the pie chart
+    const categoryData = results.reduce((acc, result) => {
+        const category = result.categories[0]?.name || "Uncategorized";
+        acc[category] = (acc[category] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const pieChartData = Object.entries(categoryData).map(([name, value]) => ({
+        name,
+        value,
+    }));
+
+    // Function to generate a slightly muted color version
+    const adjustColorBrightness = (color: string, factor: number) => {
+        let r = parseInt(color.substring(1, 3), 16);
+        let g = parseInt(color.substring(3, 5), 16);
+        let b = parseInt(color.substring(5, 7), 16);
+
+        r = Math.round(r * factor);
+        g = Math.round(g * factor);
+        b = Math.round(b * factor);
+
+        return `rgb(${r}, ${g}, ${b})`;
+    };
+
+    // Original bright colors, slightly muted (factor 0.8)
+    const BASE_COLORS = [
+        "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A28FF0", "#FF4560", "#2E93FA"
+    ];
+
+    const COLORS = BASE_COLORS.map(color => adjustColorBrightness(color, 0.8));
+
+    // Dynamically assign a color to each unique category
+    const categoryColorMap: Record<string, string> = {};
+    pieChartData.forEach((data, index) => {
+        if (!categoryColorMap[data.name]) {
+            categoryColorMap[data.name] = COLORS[index % COLORS.length];
+        }
+    });
     return (
         <Container maxWidth={false} sx={{ py: 4, maxWidth: "100%", backgroundColor: "#f9f9f9", textAlign: "center", minHeight: "100vh" }}>
-            <Card sx={{ position: "relative", overflow: "hidden", height: 400, display: "flex", alignItems: "center", justifyContent: "center", px: 4, backgroundImage: 'url(/Background.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', color: "white", textShadow: "2px 2px 8px rgba(0, 0, 0, 0.7)" }}>
+            <Card sx={{ position: "relative", overflow: "hidden", height: 400, display: "flex", alignItems: "center", justifyContent: "center", px: 4, backgroundImage: 'url(/Background2.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', color: "white", textShadow: "2px 2px 8px rgba(0, 0, 0, 0.7)" }}>
                 <Typography variant="h3" fontWeight="bold" sx={{ textAlign: "center", px: 2, py: 1, borderRadius: 2, padding: "10px" }}>Bible Question Categorizer</Typography>
             </Card>
 
@@ -96,12 +138,24 @@ export default function Home() {
                 <Typography variant="h5" fontWeight="bold" align="center">Upload CSV Files</Typography>
                 <Grid container spacing={2} justifyContent="center" sx={{ mt: 2 }}>
                     <Grid item>
-                        <Button component="label" variant="contained" startIcon={<CloudUploadIcon />}>Upload Questions
+                        <Button
+                            component="label"
+                            variant="contained"
+                            sx={{ backgroundColor: "var(--muted-blue)", color: "#ffffff" }}
+                            startIcon={<CloudUploadIcon />}
+                        >
+                            Upload Questions
                             <VisuallyHiddenInput type="file" accept=".csv" onChange={(e) => handleFileUpload(e, setQuestions, setQuestionPreview, "questions")} />
                         </Button>
                     </Grid>
                     <Grid item>
-                        <Button component="label" variant="contained" startIcon={<CloudUploadIcon />}>Upload Categories
+                        <Button
+                            component="label"
+                            variant="contained"
+                            sx={{ backgroundColor: "var(--muted-blue)", color: "#ffffff" }}
+                            startIcon={<CloudUploadIcon />}
+                        >
+                            Upload Categories
                             <VisuallyHiddenInput type="file" accept=".csv" onChange={(e) => handleFileUpload(e, setCategories, setCategoryPreview, "categories")} />
                         </Button>
                     </Grid>
@@ -109,7 +163,12 @@ export default function Home() {
             </Card>
 
             <Grid container justifyContent="center" sx={{ mt: 3 }}>
-                <Button variant="contained" color="primary" onClick={categorizeQuestions}>Categorize Questions</Button>
+                <Button
+                    component="label"
+                    variant="contained"
+                    sx={{ backgroundColor: "var(--muted-blue)", color: "#ffffff" }}
+                    startIcon={<CloudUploadIcon />}
+                    onClick={categorizeQuestions}>Categorize Questions</Button>
             </Grid>
 
             {loading && (
@@ -118,7 +177,7 @@ export default function Home() {
                 </Grid>
             )}
 
-            {(questionPreview.length > 0 || categoryPreview.length > 0) && (
+            {(questionPreview.length > 0 || categoryPreview.length > 0) && results.length < 0 && (
                 <Grid container spacing={2} sx={{ mt: 4 }}>
                     {/* Question Preview */}
                     {questionPreview.length > 0 && (
@@ -179,27 +238,71 @@ export default function Home() {
                     )}
                 </Grid>
             )}
+            {results.length > 0 && (
+                <Card sx={{ mt: 4, p: 3, backgroundColor: "#f5f5f5", width: "100%", height: "100%" }}>
+                    <Typography variant="h5" fontWeight="bold">Category Distribution</Typography>
+                    <ResponsiveContainer width="100%" height={400}>
+                        <PieChart>
+                            <Pie
+                                data={pieChartData}
+                                dataKey="value"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={120}
+                                fill="#8884d8"
+                                style={{ outline: "none" }}
+                                label={({ name }) => name}
+                                onClick={(entry) => setSelectedCategory(entry.name === selectedCategory ? null : entry.name)}
+                            >
+                                {pieChartData.map((entry) => (
+                                    <Cell key={`cell-${entry.name}`} fill={categoryColorMap[entry.name]} />
+                                ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </Card>)}
 
             {results.length > 0 && (
                 <Card sx={{ mt: 4, p: 3, backgroundColor: "#f5f5f5", width: "100%" }}>
                     <Typography variant="h5" fontWeight="bold">Results</Typography>
+                    <Typography variant="h6" sx={{ mt: 2, fontWeight: "bold", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {selectedCategory ? `Showing: ${selectedCategory}` : "Showing: All"}
+
+                        {selectedCategory && (
+                            <Button
+                                onClick={() => setSelectedCategory(null)}
+                                sx={{ ml: 2, textTransform: "none" }}
+                                variant="outlined"
+                                color="primary"
+                                size="small"
+                                startIcon={<ClearIcon />}
+                            >
+                                Clear Filter
+                            </Button>
+                        )}
+                    </Typography>
                     <TableContainer component={Paper} sx={{ mt: 3 }}>
                         <Table>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell sx={{ width: "60%" }}><strong>Question</strong></TableCell>
-                                    <TableCell sx={{ width: "30%" }}><strong>Category</strong></TableCell>
-                                    <TableCell sx={{ width: "10%" }}><strong>Confidence</strong></TableCell>
+                                    <TableCell><strong>Question</strong></TableCell>
+                                    <TableCell><strong>Category</strong></TableCell>
+                                    <TableCell><strong>Confidence</strong></TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {results.map((result, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{result.question}</TableCell>
-                                        <TableCell>{result.categories[0]?.name || "Uncategorized"}</TableCell>
-                                        <TableCell>{result.categories[0]?.confidence}%</TableCell>
-                                    </TableRow>
-                                ))}
+                                {results
+                                    .filter((result) => !selectedCategory || result.categories[0]?.name === selectedCategory)
+                                    .map((result, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell>{result.question}</TableCell>
+                                            <TableCell>{result.categories[0]?.name || "Uncategorized"}</TableCell>
+                                            <TableCell>{result.categories[0]?.confidence}%</TableCell>
+                                        </TableRow>
+                                    ))}
                             </TableBody>
                         </Table>
                     </TableContainer>
@@ -209,3 +312,12 @@ export default function Home() {
         </Container>
     );
 }
+
+
+
+
+
+
+
+
+

@@ -22,8 +22,11 @@
     "framer-motion": "^12.4.5",
     "next": "15.1.6",
     "next-auth": "^4.24.11",
+    "openai": "^4.85.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

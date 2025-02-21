@@ -38,20 +38,42 @@ export default function LoginPage() {
     };
 
     return (
-        <Container maxWidth="lg" sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Container
+            maxWidth={false}
+            sx={{
+                minHeight: "100vh",
+                width: "100vw",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "var(--light-cream)", // Light beige background
+            }}
+        >
             <Paper
                 elevation={10}
                 sx={{
                     display: "flex",
-                    width: "100%",
-                    maxWidth: 1000,
+                    width: "90%",
+                    maxWidth: 1200,
                     borderRadius: 3,
                     overflow: "hidden",
+                    backgroundColor: "#ffffff)", // Light background for the form
+                    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
                 }}
             >
                 {/* Left Section: Login Form */}
-                <Box sx={{ flex: 1, p: 5, backgroundColor: "#fff", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                    <Typography variant="h4" fontWeight={700} align="center" color="primary" gutterBottom>
+                <Box
+                    sx={{
+                        flex: 1,
+                        p: 5,
+                        backgroundColor: "#ffffff)",
+                        color: "var(--deep-brown)",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                    }}
+                >
+                    <Typography variant="h4" fontWeight={700} align="center" color="var(--deep-brown)" gutterBottom>
                         Welcome to DiscipleOS
                     </Typography>
 
@@ -66,6 +88,7 @@ export default function LoginPage() {
                             error={!!errors.email}
                             helperText={errors.email}
                             required
+                            sx={{ input: { color: "var(--dark-gray)" } }}
                         />
                         <TextField
                             label="Password"
@@ -78,21 +101,33 @@ export default function LoginPage() {
                             error={!!errors.password}
                             helperText={errors.password}
                             required
+                            sx={{ input: { color: "var(--dark-gray)" } }}
                         />
-                        <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 3, fontWeight: 600 }}>
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            sx={{
+                                mt: 3,
+                                fontWeight: 600,
+                                backgroundColor: "var(--muted-blue)", // Muted blue primary color
+                                color: "var(--light-cream)",
+                                "&:hover": { backgroundColor: "var(--deep-brown)" }, // Deep brown on hover
+                            }}
+                        >
                             Sign In
                         </Button>
                     </form>
 
-                    <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+                    <Typography variant="body2" align="center" sx={{ mt: 2, color: "var(--deep-brown)" }}>
                         Don't have an account?{" "}
-                        <Link href="/signup" color="primary" sx={{ fontWeight: 600 }}>
+                        <Link href="/signup" sx={{ fontWeight: 600, color: "var(--muted-blue)" }}>
                             Sign Up Now
                         </Link>
                     </Typography>
                 </Box>
 
-                {/* Right Section: Background Image with Overlay Text */}
+                {/* Right Section: Background Image */}
                 <Box
                     sx={{
                         flex: 1,
@@ -104,23 +139,7 @@ export default function LoginPage() {
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                     }}
-                >
-                    {/* Overlay Text */}
-                    <Typography
-                        variant="h3"
-                        fontWeight={700}
-                        sx={{
-                            position: "absolute",
-                            color: "#fff",
-                            backgroundColor: "rgba(0,0,0,0.6)",
-                            px: 3,
-                            py: 1,
-                            borderRadius: 2,
-                        }}
-                    >
-                        DiscipleOS
-                    </Typography>
-                </Box>
+                />
             </Paper>
         </Container>
     );

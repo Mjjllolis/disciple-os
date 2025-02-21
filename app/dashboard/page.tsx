@@ -1,33 +1,29 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { Container, Title, Button, Group, Text } from "@mantine/core";
+import { useState } from "react";
+import { AppBar, Box, Button, CssBaseline, Container, Toolbar, Typography } from "@mui/material";
+import BibleCategorizer from "../components/BibleCategorizer"; // Import the component
+
+const headerHeight = 64;
 
 export default function DashboardPage() {
-    const { data: session, status } = useSession();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (status === "unauthenticated") {
-            router.push("/login"); // Redirect to login if not authenticated
-        }
-    }, [status, router]);
-
     return (
-        <Container size="lg" my={40}>
-            <Text style={{ textAlign: "center" }} component="h1" size="xl">Dashboard</Text>
-            {session?.user ? (
-                <>
-                    <Text style={{ textAlign: "center" }} component="h1" size="xl">Welcome, {session.user.email}!</Text>
-                    <Group align="center" mt="md">
-                        <Button color="red" onClick={() => signOut()}>Logout</Button>
-                    </Group>
-                </>
-            ) : (
-                <Text style={{ textAlign: "center" }} component="h1" size="xl">Loading...</Text>
-            )}
-        </Container>
+        <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "var(--light-cream)" }}>
+            <CssBaseline />
+
+            {/* Header */}
+            <AppBar position="fixed" sx={{ height: `${headerHeight}px`, backgroundColor: "var(--muted-blue)", color: "var(--light-cream)", zIndex: 1100 }}>
+                <Toolbar>
+                    <Typography variant="h6" fontWeight="bold">
+                        Bible Categorizer
+                    </Typography>
+                </Toolbar>
+            </AppBar>
+
+            {/* Main Content (Loads Bible Categorizer) */}
+            <Container sx={{ marginTop: `${headerHeight}px`, p: 3 }}>
+                <BibleCategorizer />
+            </Container>
+        </Box>
     );
 }

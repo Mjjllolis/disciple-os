@@ -6,6 +6,8 @@ import ClearIcon from "@mui/icons-material/Clear";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
+import { saveAs } from "file-saver";
+import { Document, Packer, Paragraph } from "docx";
 
 const VisuallyHiddenInput = styled("input")({
     clip: "rect(0 0 0 0)",
@@ -38,6 +40,51 @@ export default function Home() {
     const [categoryPreview, setCategoryPreview] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [sermon, setSermon] = useState<{ title: string; verses: string[]; outline: string[] } | null>(null);
+    const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
+
+    const generateSermon = async (question: string) => {
+        setLoading(true);
+        setSelectedQuestion(question);
+
+        try {
+            const response = await fetch("/api/generate-sermon", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question }),
+            });
+
+            const data = await response.json();
+            setSermon(data);
+        } catch (error) {
+            console.error("Error fetching sermon:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const downloadSermon = () => {
+        if (!sermon) return;
+
+        const doc = new Document({
+            sections: [
+                {
+                    children: [
+                        new Paragraph({ text: sermon.title, heading: "Title" }),
+                        new Paragraph({ text: "Bible Verses:" }),
+                        ...sermon.verses.map((verse) => new Paragraph({ text: verse })),
+                        new Paragraph({ text: "Outline:" }),
+                        ...sermon.outline.map((point) => new Paragraph({ text: `- ${point}` })),
+                    ],
+                },
+            ],
+        });
+
+        Packer.toBlob(doc).then((blob) => {
+            saveAs(blob, `${sermon.title}.docx`);
+        });
+    };
+
 
     const handleFileUpload = (
         e: React.ChangeEvent<HTMLInputElement>,
@@ -301,12 +348,44 @@ export default function Home() {
                                             <TableCell>{result.question}</TableCell>
                                             <TableCell>{result.categories[0]?.name || "Uncategorized"}</TableCell>
                                             <TableCell>{result.categories[0]?.confidence}%</TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="contained"
+                                                    color="primary"
+                                                    onClick={() => generateSermon(result.question)}
+                                                >
+                                                    Build Sermon
+                                                </Button>
+                                            </TableCell>
                                         </TableRow>
                                     ))}
                             </TableBody>
                         </Table>
                     </TableContainer>
                 </Card>
+            )}
+            {/* Sermon Display */}
+            {sermon && (
+                <Card sx={{ mt: 4, p: 3, backgroundColor: "#f5f5f5" }}>
+                    <Typography variant="h5">{sermon.title}</Typography>
+                    <Typography variant="h6">Bible Verses:</Typography>
+                    {sermon.verses.map((verse, index) => (
+                        <Typography key={index}>- {verse}</Typography>
+                    ))}
+                    <Typography variant="h6" mt={2}>Outline:</Typography>
+                    {sermon.outline.map((point, index) => (
+                        <Typography key={index}>- {point}</Typography>
+                    ))}
+                    <Button variant="outlined" color="secondary" onClick={downloadSermon} sx={{ mt: 2 }}>
+                        Download Sermon
+                    </Button>
+                </Card>
+            )}
+
+            {loading && (
+                <Typography variant="h6" align="center" sx={{ mt: 2 }}>
+                    Generating sermon...
+                </Typography>
             )}
 
         </Container>

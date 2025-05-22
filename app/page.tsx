@@ -5,6 +5,7 @@ import { Box, Button, Typography, Avatar, Stack, Grid, Card, CardContent, Contai
 import { motion } from "framer-motion";
 import Footer from "./components/Footer";
 
+
 export default function HomePage() {
   const router = useRouter();
 

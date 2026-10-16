@@ -5,7 +5,6 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recha
 import ClearIcon from "@mui/icons-material/Clear";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material/styles";
-import Image from "next/image";
 import { saveAs } from "file-saver";
 import { Document, Packer, Paragraph } from "docx";
 
@@ -36,16 +35,14 @@ export default function Home() {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [results, setResults] = useState<Result[]>([]);
-    const [questionPreview, setQuestionPreview] = useState<any[]>([]);
-    const [categoryPreview, setCategoryPreview] = useState<any[]>([]);
+    const [questionPreview, setQuestionPreview] = useState<Record<string, unknown>[]>([]);
+    const [categoryPreview, setCategoryPreview] = useState<Record<string, unknown>[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [sermon, setSermon] = useState<{ title: string; verses: string[]; outline: string[] } | null>(null);
-    const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
 
     const generateSermon = async (question: string) => {
         setLoading(true);
-        setSelectedQuestion(question);
 
         try {
             const response = await fetch("/api/generate-sermon", {
@@ -86,10 +83,10 @@ export default function Home() {
     };
 
 
-    const handleFileUpload = (
+    const handleFileUpload = <T,>(
         e: React.ChangeEvent<HTMLInputElement>,
-        setter: React.Dispatch<React.SetStateAction<any[]>>,
-        previewSetter: React.Dispatch<React.SetStateAction<any[]>>,
+        setter: React.Dispatch<React.SetStateAction<T[]>>,
+        previewSetter: React.Dispatch<React.SetStateAction<Record<string, unknown>[]>>,
         type: "questions" | "categories"
     ) => {
         const file = e.target.files?.[0];
@@ -99,25 +96,25 @@ export default function Home() {
         reader.onload = (event) => {
             const workbook = read(event.target?.result, { type: "binary" });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const rawData = utils.sheet_to_json(sheet);
+            const rawData = utils.sheet_to_json<Record<string, string>>(sheet);
 
             // Helper function to fix encoding issues
             const fixEncoding = (text: string) => {
                 try {
                     return decodeURIComponent(escape(text));
-                } catch (e) {
+                } catch {
                     return text; // Return original text if decoding fails
                 }
             };
 
             // Format data based on type & fix encoding issues
-            const formattedData = rawData.map((row: any) =>
+            const formattedData = rawData.map((row: Record<string, string>) =>
                 type === "questions"
                     ? { text: fixEncoding(row.Question) }
                     : { name: fixEncoding(row.Category) }
             );
 
-            setter(formattedData);
+            setter(formattedData as T[]);
             previewSetter(rawData); // Store all rows for preview
         };
         reader.readAsBinaryString(file);

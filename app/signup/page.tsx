@@ -1,162 +1,113 @@
 "use client";
 
 import { useState } from "react";
+import NextLink from "next/link";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { Box, Button, Container, Grid, Paper, TextField, Typography, Link } from "@mui/material";
+import { signIn } from "next-auth/react";
+import { Alert, Button, Divider, Link, Stack, TextField, Typography } from "@mui/material";
+import { api } from "@/lib/apiClient";
+import AuthShell from "../components/AuthShell";
 
 export default function SignupPage() {
     const router = useRouter();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+    const [form, setForm] = useState({
+        churchName: "",
+        name: "",
+        email: "",
+        password: "",
+        city: "",
+        state: "",
+    });
+    const [error, setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+        setForm((f) => ({ ...f, [key]: e.target.value }));
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
-        setErrors({});
+        setError("");
 
-        if (!/^\S+@\S+$/.test(email)) {
-            setErrors((prev) => ({ ...prev, email: "Invalid email address" }));
-            return;
-        }
-        if (password.length < 6) {
-            setErrors((prev) => ({ ...prev, password: "Password must be at least 6 characters" }));
-            return;
-        }
+        if (!form.churchName.trim()) return setError("Please enter your church's name.");
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) return setError("Enter a valid email address.");
+        if (form.password.length < 8) return setError("Password must be at least 8 characters.");
 
+        setSubmitting(true);
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            router.push("/login");
-        } catch (err: any) {
-            if (err.code === "auth/email-already-in-use") {
-                setErrors({ email: "This email is already in use. Try logging in." });
-            } else if (err.code === "auth/weak-password") {
-                setErrors({ password: "Password should be at least 6 characters." });
-            } else {
-                setErrors({ email: "Failed to create account. Please try again." });
+            // Creates the Firebase user, the church, and the owner profile.
+            await api("/api/signup", { json: form });
+
+            const result = await signIn("credentials", {
+                email: form.email,
+                password: form.password,
+                redirect: false,
+            });
+            if (result?.error) {
+                router.push("/login");
+                return;
             }
+            router.push("/dashboard");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Could not create your account.");
+            setSubmitting(false);
         }
     };
 
     return (
-        <Container
-            maxWidth={false}
-            sx={{
-                minHeight: "100vh",
-                width: "100vw",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "var(--light-cream)", // Light beige background
-            }}
+        <AuthShell
+            title="Register your church"
+            subtitle="Free to build surveys and collect responses. Welcome credits included."
         >
-            <Paper
-                elevation={10}
-                sx={{
-                    display: "flex",
-                    width: "90%",
-                    maxWidth: 1200,
-                    borderRadius: 3,
-                    overflow: "hidden",
-                    backgroundColor: "#ffffff)", // Light background for the form
-                    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-                }}
-            >
-                {/* Left Section: Login Form */}
-                <Box
-                    sx={{
-                        flex: 1,
-                        p: 5,
-                        backgroundColor: "#ffffff)",
-                        color: "var(--deep-brown)",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                    }}
-                >
-                    <Typography variant="h4" fontWeight={700} align="center" color="var(--deep-brown)" gutterBottom>
-                        Create Your Account
-                    </Typography>
+            <form onSubmit={handleSignup} noValidate>
+                <Stack gap={2}>
+                    <TextField
+                        label="Church name"
+                        fullWidth
+                        value={form.churchName}
+                        onChange={set("churchName")}
+                        placeholder="First Baptist Church"
+                        autoFocus
+                    />
+                    <Stack direction="row" gap={2}>
+                        <TextField label="City" fullWidth value={form.city} onChange={set("city")} />
+                        <TextField label="State" sx={{ width: 120 }} value={form.state} onChange={set("state")} />
+                    </Stack>
 
-                    <form onSubmit={handleSignup} noValidate>
-                        <TextField
-                            label="Email"
-                            variant="outlined"
-                            fullWidth
-                            margin="normal"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            error={!!errors.email}
-                            helperText={errors.email}
-                            required
-                        />
-                        <TextField
-                            label="Password"
-                            variant="outlined"
-                            fullWidth
-                            margin="normal"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            error={!!errors.password}
-                            helperText={errors.password}
-                            required
-                        />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{
-                                mt: 3,
-                                fontWeight: 600,
-                                backgroundColor: "var(--muted-blue)", // Muted blue primary color
-                                color: "var(--light-cream)",
-                                "&:hover": { backgroundColor: "var(--deep-brown)" }, // Deep brown on hover
-                            }}
-                        >
-                            Sign Up
-                        </Button>
-                    </form>
+                    <Divider sx={{ my: 0.5 }} />
 
-                    <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-                        Already have an account?{" "}
-                        <Link href="/login" sx={{ fontWeight: 600, color: "var(--muted-blue)" }}>
-                            Log In
-                        </Link>
-                    </Typography>
-                </Box>
+                    <TextField label="Your name" fullWidth autoComplete="name" value={form.name} onChange={set("name")} />
+                    <TextField
+                        label="Email"
+                        type="email"
+                        autoComplete="email"
+                        fullWidth
+                        value={form.email}
+                        onChange={set("email")}
+                    />
+                    <TextField
+                        label="Password"
+                        type="password"
+                        autoComplete="new-password"
+                        fullWidth
+                        value={form.password}
+                        onChange={set("password")}
+                        helperText="At least 8 characters"
+                    />
 
-                {/* Right Section: Background Image with Overlay Text */}
-                <Box
-                    sx={{
-                        flex: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        position: "relative",
-                        backgroundImage: "url('/ChurchHands.jpg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                    }}
-                >
-                    {/* Overlay Text */}
-                    {/* <Typography
-                        variant="h3"
-                        fontWeight={700}
-                        sx={{
-                            position: "absolute",
-                            color: "#fff",
-                            backgroundColor: "rgba(0,0,0,0.6)",
-                            px: 3,
-                            py: 1,
-                            borderRadius: 2,
-                        }}
-                    >
-                        DiscipleOS
-                    </Typography> */}
-                </Box>
-            </Paper>
-        </Container>
+                    {error && <Alert severity="error">{error}</Alert>}
+
+                    <Button type="submit" fullWidth size="large" variant="contained" disabled={submitting}>
+                        {submitting ? "Creating your account…" : "Create account"}
+                    </Button>
+                </Stack>
+            </form>
+
+            <Typography variant="body2" sx={{ mt: 4, color: "var(--ink-2)", textAlign: "center" }}>
+                Already have an account?{" "}
+                <Link component={NextLink} href="/login" sx={{ fontWeight: 600 }}>
+                    Sign in
+                </Link>
+            </Typography>
+        </AuthShell>
     );
 }

@@ -1,146 +1,123 @@
 "use client";
 
 import { useState } from "react";
+import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Box, Button, Container, Grid, Paper, TextField, Typography, Link } from "@mui/material";
+import { Alert, Box, Button, Divider, Link, Stack, TextField, Typography } from "@mui/material";
+import ChurchOutlinedIcon from "@mui/icons-material/ChurchOutlined";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import AuthShell from "../components/AuthShell";
+
+/**
+ * One-click test logins (created by `npm run seed:fbc-test`). Development only:
+ * a production build never renders them, so test credentials never ship.
+ */
+const TEST_LOGINS =
+    process.env.NODE_ENV === "production"
+        ? []
+        : [
+              { label: "Church Login", icon: ChurchOutlinedIcon, email: "fbc-test@example.com", password: "FbcTest2026!" },
+              { label: "Admin Login", icon: AdminPanelSettingsOutlinedIcon, email: "admin@example.com", password: "AdminTest2026!" },
+          ];
 
 export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+    const [error, setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setErrors({});
-
-        if (!/^\S+@\S+$/.test(email)) {
-            setErrors((prev) => ({ ...prev, email: "Invalid email address" }));
-            return;
-        }
-        if (password.length < 6) {
-            setErrors((prev) => ({ ...prev, password: "Password must be at least 6 characters" }));
-            return;
-        }
-
-        const res = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
-        });
-
+    const login = async (loginEmail: string, loginPassword: string) => {
+        setError("");
+        setSubmitting(true);
+        const res = await signIn("credentials", { email: loginEmail, password: loginPassword, redirect: false });
         if (res?.error) {
-            setErrors({ email: "Invalid email or password", password: "Invalid email or password" });
+            setError("That email and password don't match an account.");
+            setSubmitting(false);
         } else {
             router.push("/dashboard");
         }
     };
 
-    return (
-        <Container
-            maxWidth={false}
-            sx={{
-                minHeight: "100vh",
-                width: "100vw",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "var(--light-cream)", // Light beige background
-            }}
-        >
-            <Paper
-                elevation={10}
-                sx={{
-                    display: "flex",
-                    width: "90%",
-                    maxWidth: 1200,
-                    borderRadius: 3,
-                    overflow: "hidden",
-                    backgroundColor: "#ffffff)", // Light background for the form
-                    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-                }}
-            >
-                {/* Left Section: Login Form */}
-                <Box
-                    sx={{
-                        flex: 1,
-                        p: 5,
-                        backgroundColor: "#ffffff)",
-                        color: "var(--deep-brown)",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                    }}
-                >
-                    <Typography variant="h4" fontWeight={700} align="center" color="var(--deep-brown)" gutterBottom>
-                        Welcome to DiscipleOS
-                    </Typography>
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!/^\S+@\S+$/.test(email)) return setError("Enter a valid email address.");
+        if (password.length < 6) return setError("Password must be at least 6 characters.");
+        await login(email, password);
+    };
 
-                    <form onSubmit={handleLogin} noValidate>
-                        <TextField
-                            label="Email"
-                            variant="outlined"
-                            fullWidth
-                            margin="normal"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            error={!!errors.email}
-                            helperText={errors.email}
-                            required
-                            sx={{ input: { color: "var(--dark-gray)" } }}
-                        />
+    return (
+        <AuthShell title="Welcome back" subtitle="Sign in to see what your congregation is saying.">
+            {TEST_LOGINS.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                    <Stack direction="row" gap={1.5}>
+                        {TEST_LOGINS.map((t) => {
+                            const Icon = t.icon;
+                            return (
+                                <Button
+                                    key={t.label}
+                                    fullWidth
+                                    variant="outlined"
+                                    size="large"
+                                    disabled={submitting}
+                                    startIcon={<Icon />}
+                                    onClick={() => {
+                                        setEmail(t.email);
+                                        setPassword(t.password);
+                                        void login(t.email, t.password);
+                                    }}
+                                    sx={{ color: "var(--ink)", backgroundColor: "var(--surface)" }}
+                                >
+                                    {t.label}
+                                </Button>
+                            );
+                        })}
+                    </Stack>
+                    <Divider sx={{ mt: 3, color: "var(--ink-2)", fontSize: "0.8rem" }}>or sign in with email</Divider>
+                </Box>
+            )}
+            <form onSubmit={handleLogin} noValidate>
+                <Stack gap={2}>
+                    <TextField
+                        label="Email"
+                        type="email"
+                        autoComplete="email"
+                        fullWidth
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        autoFocus
+                    />
+                    <Box>
                         <TextField
                             label="Password"
-                            variant="outlined"
-                            fullWidth
-                            margin="normal"
                             type="password"
+                            autoComplete="current-password"
+                            fullWidth
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            error={!!errors.password}
-                            helperText={errors.password}
-                            required
-                            sx={{ input: { color: "var(--dark-gray)" } }}
                         />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{
-                                mt: 3,
-                                fontWeight: 600,
-                                backgroundColor: "var(--muted-blue)", // Muted blue primary color
-                                color: "var(--light-cream)",
-                                "&:hover": { backgroundColor: "var(--deep-brown)" }, // Deep brown on hover
-                            }}
-                        >
-                            Sign In
-                        </Button>
-                    </form>
+                        <Box sx={{ textAlign: "right", mt: 1 }}>
+                            <Link component={NextLink} href="/forgot-password" variant="body2">
+                                Forgot password?
+                            </Link>
+                        </Box>
+                    </Box>
 
-                    <Typography variant="body2" align="center" sx={{ mt: 2, color: "var(--deep-brown)" }}>
-                        Don't have an account?{" "}
-                        <Link href="/signup" sx={{ fontWeight: 600, color: "var(--muted-blue)" }}>
-                            Sign Up Now
-                        </Link>
-                    </Typography>
-                </Box>
+                    {error && <Alert severity="error">{error}</Alert>}
 
-                {/* Right Section: Background Image */}
-                <Box
-                    sx={{
-                        flex: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        position: "relative",
-                        backgroundImage: "url('/ChurchHands.jpg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                    }}
-                />
-            </Paper>
-        </Container>
+                    <Button type="submit" fullWidth size="large" variant="contained" disabled={submitting}>
+                        {submitting ? "Signing in…" : "Sign in"}
+                    </Button>
+                </Stack>
+            </form>
+
+            <Typography variant="body2" sx={{ mt: 4, color: "var(--ink-2)", textAlign: "center" }}>
+                New to DiscipleShip?{" "}
+                <Link component={NextLink} href="/signup" sx={{ fontWeight: 600 }}>
+                    Register your church
+                </Link>
+            </Typography>
+        </AuthShell>
     );
 }

@@ -1,0 +1,67 @@
+# Firebase App Hosting (Cloud Run). Long timeouts matter here: a sermon series
+# writes N outlines in one request, and an analysis of a large survey makes
+# dozens of model calls.
+runConfig:
+  cpu: 1
+  memoryMiB: 1024
+  minInstances: 0
+  maxInstances: 10
+  # Model calls are I/O-bound, so one instance can hold several at once.
+  concurrency: 40
+  # Must exceed the largest `maxDuration` in the route handlers (900s).
+  timeoutSeconds: 900
+
+env:
+  # ---- public Firebase config: needed at build time for the client bundle ----
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    secret: firebase-api-key
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    secret: firebase-auth-domain
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    secret: firebase-project-id
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    secret: firebase-storage-bucket
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    secret: firebase-messaging-sender-id
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    secret: firebase-app-id
+    availability: [BUILD, RUNTIME]
+
+  # ---- server-only secrets ----
+  # App Hosting runs with Application Default Credentials, so the Admin SDK
+  # needs no service-account key here — only FIREBASE_PROJECT_ID.
+  - variable: FIREBASE_PROJECT_ID
+    secret: firebase-project-id
+    availability: [RUNTIME]
+  - variable: NEXTAUTH_SECRET
+    secret: nextauth-secret
+    availability: [RUNTIME]
+  - variable: NEXTAUTH_URL
+    secret: nextauth-url
+    availability: [RUNTIME]
+  - variable: OPENAI_API_KEY
+    secret: openai-api-key
+    availability: [RUNTIME]
+  - variable: SUPER_ADMIN_EMAILS
+    secret: super-admin-emails
+    availability: [RUNTIME]
+  - variable: RESEND_API_KEY
+    secret: resend-api-key
+    availability: [RUNTIME]
+  - variable: STRIPE_SECRET_KEY
+    secret: stripe-secret-key
+    availability: [RUNTIME]
+  - variable: STRIPE_WEBHOOK_SECRET
+    secret: stripe-webhook-secret
+    availability: [RUNTIME]
+  - variable: EMAIL_FROM
+    value: "DiscipleShip International <noreply@discipleship.international>"
+    availability: [RUNTIME]
+  - variable: WELCOME_CREDITS
+    value: "250"
+    availability: [RUNTIME]

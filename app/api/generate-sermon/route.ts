@@ -1,44 +1,61 @@
-import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { NextRequest } from "next/server";
+import { generateSermon } from "@/lib/sermons";
+import { adjustCredits, InsufficientCreditsError } from "@/lib/db";
+import { priceSermons } from "@/lib/modules";
+import { rateLimit } from "@/lib/rateLimit";
+import { handle, HttpError, requireChurchActor, requireModuleAccess } from "@/lib/session";
+
+/**
+ * Legacy endpoint kept for the Bible Categorizer's "generate a sermon" button.
+ * It returns the old {title, verses, outline} shape. New work should use
+ * /api/sermons/generate, which persists a full sermon.
+ *
+ * Like /api/categorize, this was unauthenticated and is now gated.
+ */
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
-    try {
+    return handle(async () => {
+        const actor = await requireChurchActor();
+        const church = await requireModuleAccess("sermon_builder", actor);
+        await rateLimit({ key: `sermon-legacy:${actor.churchId}`, limit: 20, windowSeconds: 60 });
+
         const { question } = await req.json();
-
-        if (!question) {
-            return NextResponse.json({ error: "Missing question parameter" }, { status: 400 });
+        if (typeof question !== "string" || !question.trim()) {
+            throw new HttpError(400, "Provide a question to build the sermon around.");
         }
 
-        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: "You are an AI that generates sermon outlines based on Bible questions." },
-                {
-                    role: "user",
-                    content: `Generate a sermon outline based on this question: "${question}". 
-                    Include the following in JSON format: 
-                    {"title": "Sermon Title", "verses": ["Verse 1", "Verse 2", "Verse 3"], "outline": ["Point 1", "Point 2", "Point 3"]}.`
-                },
-            ],
-            max_tokens: 300,
-        });
-
-        let sermon;
+        const credits = priceSermons(1, church);
         try {
-            sermon = JSON.parse(response.choices[0]?.message?.content?.trim() || "{}");
-
-            if (!sermon.title || !sermon.verses || !sermon.outline) {
-                sermon = { title: "Sermon Not Available", verses: [], outline: [] };
-            }
-        } catch (error) {
-            sermon = { title: "Sermon Not Available", verses: [], outline: [] };
+            await adjustCredits({
+                churchId: actor.churchId,
+                delta: -credits,
+                reason: "Sermon outline",
+                actorUid: actor.uid,
+            });
+        } catch (err) {
+            if (err instanceof InsufficientCreditsError) throw new HttpError(402, err.message);
+            throw err;
         }
 
-        return NextResponse.json(sermon);
-    } catch (error) {
-        console.error("Error generating sermon:", error);
-        return NextResponse.json({ error: "Error processing request" }, { status: 500 });
-    }
+        try {
+            const sermon = await generateSermon({
+                topic: question.trim().slice(0, 500),
+                audience: "a Sunday morning congregation",
+            });
+            return {
+                title: sermon.title,
+                verses: sermon.scripture,
+                outline: sermon.points.map((p) => p.heading),
+            };
+        } catch {
+            await adjustCredits({
+                churchId: actor.churchId,
+                delta: credits,
+                reason: "Refund — sermon generation failed",
+                actorUid: "system",
+            }).catch(() => {});
+            throw new HttpError(500, "Sermon generation failed and your credits were refunded.");
+        }
+    });
 }

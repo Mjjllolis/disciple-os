@@ -8,7 +8,7 @@ export default function Home() {
 
     return (
         <Container>
-            <Title>Welcome to Disciple OS</Title>
+            <Title>Welcome to DiscipleShip International</Title>
             {session ? (
                 <>
                     <Button onClick={() => router.push("/dashboard")}>Go to Dashboard</Button>

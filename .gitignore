@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# A global ~/.gitignore rule ignores "lib"; this app's server code lives there.
+!lib/
+!lib/**
+
+# The env template is meant to be committed; real secrets stay in .env.local.
+!.env.example
+
+# Local Firebase emulator data (npm run dev:local)
+/.emulator-data/
+*-debug.log

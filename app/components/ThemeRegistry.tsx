@@ -1,24 +1,15 @@
-"use client"; // ✅ Ensure this is a client component
+"use client";
 
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { MantineProvider } from "@mantine/core";
-import CssBaseline from "@mui/material/CssBaseline";
 import React from "react";
-
-// Define Material UI theme
-const muiTheme = createTheme({
-    palette: {
-        mode: "light",
-    },
-});
+import { ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import { theme } from "../theme";
 
 export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
     return (
-        <MantineProvider >
-            <ThemeProvider theme={muiTheme}>
-                <CssBaseline />
-                {children}
-            </ThemeProvider>
-        </MantineProvider>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            {children}
+        </ThemeProvider>
     );
 }

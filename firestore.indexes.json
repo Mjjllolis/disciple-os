@@ -1,0 +1,31 @@
+{
+  "indexes": [
+    {
+      "comment": "reapStaleJobs() filters a church's jobs by status.",
+      "collectionGroup": "jobs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "churchId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "comment": "listBookings() can filter to a single visit slot.",
+      "collectionGroup": "visitBookings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "churchId", "order": "ASCENDING" },
+        { "fieldPath": "slotId", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "comment": "Rate-limit buckets are disposable; let Firestore TTL purge them.",
+      "collectionGroup": "rateLimits",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    }
+  ]
+}
